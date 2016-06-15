@@ -7,9 +7,9 @@ Come back here on June 15th, 2016.
 
 ## Networks
 ### Images
-- InceptionV3-batchnorm (http://arxiv.org/abs/1512.00567 , https://github.com/Moodstocks/inception-v3.torch)
+- InceptionV3-batchnorm (http://arxiv.org/abs/1512.00567 , https://gist.github.com/soumith/e18a56b847a8905a84fffb1f32b06db8, https://github.com/Moodstocks/inception-v3.torch)
 - Alexnet-OWT
-- VGG
+- VGG-D
 - ResNet-50 ( http://arxiv.org/abs/1512.03385 , https://github.com/facebook/fb.resnet.torch )
 
 ### Video
