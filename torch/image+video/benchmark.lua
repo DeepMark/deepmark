@@ -18,8 +18,8 @@ local net, isize = require(opt.network)()
 -- randomly initialized input
 local input  = torch.randn(unpack(isize))
 
--- random target classes from  1 to 200
-local target = torch.Tensor(input:size(1)):random(1, 200)
+-- random target classes from  1 to 100
+local target = torch.Tensor(input:size(1)):random(1, 100)
 
 -- optimize memory
 -- optnet.optimizeMemory(net, input, {inplace=true, mode='training', reuseBuffers=true})

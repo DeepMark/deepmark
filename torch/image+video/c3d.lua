@@ -29,7 +29,7 @@ local function c3d(nGPU)
    classifier:add(nn.Linear(4096, 4096))
    classifier:add(nn.ReLU(true))
    classifier:add(nn.Dropout(0.5))
-   classifier:add(nn.Linear(4096, 432))
+   classifier:add(nn.Linear(4096, 101)) -- UCF-101
 
    local model = nn.Sequential()
    model:add(features):add(classifier)
