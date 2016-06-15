@@ -3,7 +3,8 @@ THE Deep Learning Benchmarks
 
 See: https://github.com/soumith/convnet-benchmarks/issues/101
 
-Come back here on June 15th, 2016.
+~~Come back here on June 15th, 2016.~~  
+A bit delayed due to y'know -- a lot of co-ordination among groups.
 
 ## Networks
 ### Images
