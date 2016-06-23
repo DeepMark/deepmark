@@ -40,9 +40,18 @@ function BatchBRNN:updateOutput(input)
 end
 
 function BatchBRNN:__tostring__()
-    if self.module.__tostring__ then
-        return torch.type(self) .. ' @ ' .. self.module:__tostring__()
-    else
-        return torch.type(self) .. ' @ ' .. torch.type(self.module)
+    local tab = '  '
+    local line = '\n'
+    local next = ' -> '
+    local str = 'BatchRNN'
+    str = str .. ' {' .. line .. tab .. '[input'
+    for i=1,#self.modules do
+        str = str .. next .. '(' .. i .. ')'
     end
+    str = str .. next .. 'output]'
+    for i=1,#self.modules do
+        str = str .. line .. tab .. '(' .. i .. '): ' .. tostring(self.modules[i]):gsub(line, line .. tab)
+    end
+    str = str .. line .. '}'
+    return str
 end

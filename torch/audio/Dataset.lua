@@ -3,97 +3,76 @@
 -- Creates a dataset of random numbers based on the Baidu chosen
 -- distribution of dataset for the benchmark.
 ------------------------------------------------------------------------
-local Dataset = {}
+require 'nn'
+local Dataset = torch.class('nn.DeepSpeechDataset')
 
--- Each represents Length(s),Frequency(percent),Label length
-local distribution = {
-    { 1, 3.0, 7 },
-    { 2, 10.0, 17 },
-    { 3, 11.0, 35 },
-    { 4, 13.0, 48 },
-    { 5, 14.0, 62 },
-    { 6, 13.0, 78 },
-    { 7, 9.0, 93 },
-    { 8, 8.0, 107 },
-    { 9, 5.0, 120 },
-    { 10, 4.0, 134 },
-    { 11, 3.0, 148 },
-    { 12, 2.0, 163 },
-    { 13, 2.0, 178 },
-    { 14, 2.0, 193 },
-    { 15, 1.0, 209 },
-}
+Dataset.uttLengths = { 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500 }
+Dataset.counts = { 3, 10, 11, 13, 14, 13, 9, 8, 5, 4, 3, 2, 2, 2, 1 }
+Dataset.label_lengths = { 7, 17, 35, 48, 62, 78, 93, 107, 120, 134, 148, 163, 178, 193, 209 }
 
-local nbOfTimeStepsPerSecond = 100
+Dataset.freqBins = 161
 
--- When using batch sizes not of 100s, we use the largest remainder method to ensure that the dataset size is filled.
-local function numberOfEntries(batchSize)
-    local entries = {}
-    for index, entry in ipairs(distribution) do
-        local distribution = entry[2]
-        local numberOfEntries = (distribution / 100) * batchSize
-        entries[index] = numberOfEntries
+Dataset.scaleFactor = 10 * 128
+
+Dataset.chars = 29
+
+Dataset.extra = 1000
+
+function Dataset:__init(minibatchSize)
+    self.minibatchSize = minibatchSize
+    self.current = 1
+    self.uttCounts = {}
+    for index, value in ipairs(Dataset.counts) do
+        table.insert(self.uttCounts, value * Dataset.scaleFactor)
     end
-    -- Round everything down
-    local flooredEntries = {}
-    for index, entry in ipairs(entries) do
-        flooredEntries[index] = math.floor(entry)
-    end
-    -- Calculate the decimal differences
-    local decimals = {}
-    for index, entry in ipairs(entries) do
-        decimals[index] = entry- flooredEntries[index]
-    end
-    -- Add the index of entry before sorting it based on decimals
-    local sortedEntries = {}
-    for index, entry in ipairs(decimals) do
-        sortedEntries[index] = { entry, index }
-    end
-
-    local function compare(a, b)
-        return a[1] > b[1]
-    end
-
-    table.sort(sortedEntries, compare)
-
-    local sumTensor = torch.Tensor(#distribution)
-
-    for index, value in ipairs(entries) do
-        sumTensor[index] = flooredEntries[index]
-    end
-
-    local counter = 1
-    while (torch.sum(sumTensor) ~= batchSize) do
-        local index = sortedEntries[counter][2]
-        sumTensor[index] = sumTensor[index] + 1
-    end
-    return sumTensor
+    self.randomness = torch.randn(Dataset.freqBins, minibatchSize * (Dataset.uttLengths[#Dataset.uttLengths] + self.extra))
 end
 
-function Dataset.createDataset(batchSize, spectrogramSize)
-    local maxLength = distribution[#distribution][1] * nbOfTimeStepsPerSecond
-    local inputs = torch.Tensor(batchSize, 1, spectrogramSize, maxLength) -- we assume everything is padded with 0s.
-    local targets = {}
-    local labelLengths = torch.Tensor(batchSize)
-    local counter = 1
+function Dataset:next()
+    if self.current > #self.uttCounts then
+        return nil
+    else
+        local inc
+        local miniBatchSize
 
-    local numberOfEntries = numberOfEntries(batchSize)
-
-    for index, entry in ipairs(distribution) do
-        local seconds = entry[1]
-        local distribution = entry[2]
-        local labelLength = entry[3]
-        local sequenceLength = seconds * nbOfTimeStepsPerSecond
-        for x = 1, numberOfEntries[index] do
-            local tensor = torch.randn(spectrogramSize, sequenceLength)
-            inputs[counter][1]:narrow(2, 1, tensor:size(2)):copy(tensor) -- copy the tensor into fixed size dataset
-            labelLengths[counter] = labelLength
-            local target = torch.randn(labelLength)
-            table.insert(targets, torch.totable(target))
-            counter = counter + 1
+        if (self.uttCounts[self.current] > self.minibatchSize) then
+            miniBatchSize = self.minibatchSize
+            self.uttCounts[self.current] = self.uttCounts[self.current] - self.minibatchSize
+            inc = 0
+        else
+            miniBatchSize = self.uttCounts[self.current]
+            self.uttCounts[self.current] = 0
+            inc = 1
         end
+        local uttLength = self.uttLengths[self.current]
+        local labelLength = self.label_lengths[self.current]
+
+        local startIndex = math.random(1, Dataset.extra + self.minibatchSize * (Dataset.uttLengths[#Dataset.uttLengths] - self.uttLengths[self.current]))
+
+        local endIndex = startIndex + uttLength * miniBatchSize
+
+        self.current = self.current + inc
+        local label = torch.Tensor(labelLength)
+        for x = 1, labelLength do
+            label[x] = math.random(Dataset.chars)
+        end
+        local input = self.randomness[{ {}, { startIndex, endIndex - 1 } }]
+        return uttLength, input, label
     end
-    return inputs, targets, labelLengths
+end
+
+-- Converts the iterator information into the format required for Torch benchmark
+function Dataset:nextTorchSet()
+    local uttLength, input, label = self:next()
+    if (uttLength ~= nil) then
+        -- Define length and label for each sample in minibatch.
+        uttLength = torch.Tensor(self.minibatchSize):fill(uttLength)
+        label = label:view(1, -1):expand(self.minibatchSize, label:size(1))
+        return uttLength, input, torch.totable(label)
+    else
+        return nil
+    end
 end
 
 return Dataset
+
