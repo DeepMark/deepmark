@@ -3,8 +3,7 @@ require 'cunn'
 require 'cudnn'
 require 'nnx' -- For the CTCCriterion
 require 'BatchBRNNReLU'
-
-local Dataset = require 'Dataset'
+require 'Dataset'
 
 cudnn.benchmark = true -- run manual auto-tuner provided by cudnn
 cudnn.verbose = false
@@ -19,21 +18,21 @@ print('Running on device: ' .. cutorch.getDeviceProperties(cutorch.getDevice()).
 
 steps = 10 -- nb of steps in loop to average perf
 nDryRuns = 10
-batchSize = 20
+batchSize = 32
 spectrogramSize = 161
 criterion = nn.CTCCriterion():cuda()
+local dataset = nn.DeepSpeechDataset(batchSize)
 
 for i=1,#nets do
     for j=1,#libs do
         collectgarbage()
-        local model,model_name = nets[i](libs[j])
+        local model, model_name, calculateInputSizes = nets[i](libs[j], batchSize, dataset.freqBins)
+        local sizes, input, targets = dataset:nextTorchSet()
+
         model = model:cuda()
-        local input, target, labelLengths = Dataset.createDataset(batchSize, spectrogramSize)
         input = input:cuda()
         local lib_name = libs[j][5]
-        print('ModelType: ' .. model_name, 'Kernels: ' .. lib_name,
-            'Input shape: ' .. input:size(1) .. 'x' .. input:size(2) ..
-                    'x' .. input:size(3) .. 'x' .. input:size(4))
+        print('ModelType: ' .. model_name, 'Kernels: ' .. lib_name)
 
         -- dry-run
         for i=1,nDryRuns do
@@ -47,26 +46,39 @@ for i=1,#nets do
 
         local tmf, tmbi, tmbg = 0,0,0
         local ok = 1
-        for t = 1,steps do
-            sys.tic()
-            -- Forward through model and then criterion.
-            output = model:updateOutput(input)
-            loss = criterion:updateOutput(output, target, labelLengths)
-            tmf = tmf + sys.toc()
-            cutorch.synchronize()
+        for t = 1, steps do
+            dataset = nn.DeepSpeechDataset(batchSize)
+            local numberOfIterations = 0
+            local sizes, input, targets = dataset:nextTorchSet()
+            while (sizes ~= nil) do
+                input = input:cuda()
+                sys.tic()
+                -- Forward through model and then criterion.
+                local output = model:updateOutput(input)
+                loss = criterion:updateOutput(output, targets, calculateInputSizes(sizes))
 
-            -- Backwards (updateGradInput, accGradParameters) including the criterion.
-            sys.tic()
-            gradInput = model:updateGradInput(input, output)
-            criterion:updateGradInput(output, target, labelLengths)
-            tmbi = tmbi + sys.toc()
-            cutorch.synchronize()
+                tmf = tmf + sys.toc()
+                cutorch.synchronize()
 
-            collectgarbage()
-            sys.tic()
-            ok = pcall(function() model:accGradParameters(input, output) end)
-            tmbg = tmbg + sys.toc()
-            cutorch.synchronize()
+                -- Backwards (updateGradInput, accGradParameters) including the criterion.
+                sys.tic()
+                grads = criterion:updateGradInput(output, targets)
+                model:updateGradInput(input, output)
+                tmbi = tmbi + sys.toc()
+                cutorch.synchronize()
+
+                collectgarbage()
+                sys.tic()
+                ok = pcall(function() model:accGradParameters(input, output) end)
+                tmbg = tmbg + sys.toc()
+                cutorch.synchronize()
+                sizes, input, targets = dataset:nextTorchSet()
+                numberOfIterations = numberOfIterations + 1
+            end
+            -- Divide the times to work out average time for updateOutput/updateGrad/accGrad
+            tmf = tmf/numberOfIterations
+            tmbi = tmbi/numberOfIterations
+            tmbg = tmbi/numberOfIterations
         end
         tmf = tmf/steps
         tmbi = tmbi/steps
