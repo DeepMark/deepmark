@@ -25,7 +25,8 @@ function Dataset:__init(minibatchSize)
     for index, value in ipairs(Dataset.counts) do
         table.insert(self.uttCounts, value * Dataset.scaleFactor)
     end
-    self.randomness = torch.randn(Dataset.freqBins, minibatchSize * (Dataset.uttLengths[#Dataset.uttLengths] + self.extra))
+    -- Swapped the freqBins around compared to ref for multiGPU support.
+    self.randomness = torch.randn(minibatchSize * (Dataset.uttLengths[#Dataset.uttLengths] + self.extra), Dataset.freqBins)
 end
 
 function Dataset:next()
@@ -56,7 +57,7 @@ function Dataset:next()
         for x = 1, labelLength do
             label[x] = math.random(Dataset.chars)
         end
-        local input = self.randomness[{ {}, { startIndex, endIndex - 1 } }]
+        local input = self.randomness[{{ startIndex, endIndex - 1 }, {} }]
         return uttLength, input, label
     end
 end
