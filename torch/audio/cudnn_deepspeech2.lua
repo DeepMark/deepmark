@@ -32,7 +32,7 @@ local function cudnnDeepSpeech2(miniBatchSize, freqBins, nGPUs)
     return model, 'cudnnDeepSpeech2', calculateInputSizes
 end
 
-function makeDataParallel(model, nGPU)
+function makeModelParallel(model, nGPU)
     if nGPU >= 1 then
         if nGPU > 1 then
             gpus = torch.range(1, nGPU):totable()
