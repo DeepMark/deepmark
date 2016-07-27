@@ -37,6 +37,7 @@ A bit delayed due to y'know -- a lot of co-ordination among groups.
 Everyone who wants to join-in, but I thought an initial set that is important to cover would be:
 - Caffe
 - Chainer
+- CNTK
 - MXNet
 - Neon
 - Theano
