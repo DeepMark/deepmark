@@ -15,7 +15,7 @@ deepSpeech = require 'cudnn_deepspeech2'
 
 print('Running on device: ' .. cutorch.getDeviceProperties(cutorch.getDevice()).name)
 
-steps = 10 -- nb of steps in loop to average perf
+steps = 1 -- nb of steps in loop to average perf
 nDryRuns = 10
 batchSize = 32
 spectrogramSize = 161
@@ -70,6 +70,7 @@ for t = 1, steps do
         cutorch.synchronize()
         sizes, input, targets = dataset:nextTorchSet()
         numberOfIterations = numberOfIterations + 1
+        xlua.progress(numberOfIterations * batchSize, dataset.size)
     end
     -- Divide the times to work out average time for updateOutput/updateGrad/accGrad
     tmf = tmf / numberOfIterations
@@ -79,17 +80,17 @@ end
 tmf = tmf / steps
 tmbi = tmbi / steps
 tmbg = tmbi / steps
-print(string.format("%-30s %25s %10.2f", lib_name, ':updateOutput():', tmf * 1000))
-print(string.format("%-30s %25s %10.2f", lib_name, ':updateGradInput():', tmbi * 1000))
+print(string.format("%-30s %25s %10.2f", 'cuDNN', ':updateOutput():', tmf * 1000))
+print(string.format("%-30s %25s %10.2f", 'cuDNN', ':updateGradInput():', tmbi * 1000))
 
 if not ok then
-    print(string.format("%-30s %25s %s", lib_name, ':accGradParameters():', 'FAILED!'))
+    print(string.format("%-30s %25s %s", 'cuDNN', ':accGradParameters():', 'FAILED!'))
 else
-    print(string.format("%-30s %25s %10.2f", lib_name, ':accGradParameters():', tmbg * 1000))
+    print(string.format("%-30s %25s %10.2f", 'cuDNN', ':accGradParameters():', tmbg * 1000))
 end
-print(string.format("%-30s %25s %10.2f", lib_name, ':Forward:', (tmf) * 1000))
-print(string.format("%-30s %25s %10.2f", lib_name, ':Backward:', (tmbi + tmbg) * 1000))
-print(string.format("%-30s %25s %10.2f", lib_name, ':TOTAL:', (tmf + tmbi + tmbg) * 1000))
+print(string.format("%-30s %25s %10.2f", 'cuDNN', ':Forward:', (tmf) * 1000))
+print(string.format("%-30s %25s %10.2f", 'cuDNN', ':Backward:', (tmbi + tmbg) * 1000))
+print(string.format("%-30s %25s %10.2f", 'cuDNN', ':TOTAL:', (tmf + tmbi + tmbg) * 1000))
 print()
 
 print('')
