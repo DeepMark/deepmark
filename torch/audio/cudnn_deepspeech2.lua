@@ -36,7 +36,7 @@ function makeModelParallel(model, nGPU)
     if nGPU >= 1 then
         if nGPU > 1 then
             gpus = torch.range(1, nGPU):totable()
-            dpt = nn.DataParallelTable(1):add(model, gpus):threads(function()
+            dpt = nn.DataParallelTable(1, true, true):add(model, gpus):threads(function()
                 local cudnn = require 'cudnn'
                 cudnn.fastest = true
                 require 'BatchBRNNReLU'
