@@ -86,21 +86,22 @@ tmf = tmf / steps
 tmbi = tmbi / steps
 tmbg = tmbi / steps
 tRoundTrip = tRoundTrip / steps
-print(string.format("%-30s %25s %10.2f", 'cuDNN', ':updateOutput():', tmf * 1000))
-print(string.format("%-30s %25s %10.2f", 'cuDNN', ':updateGradInput():', tmbi * 1000))
+print(string.format("%-30s %25s %10.2f", 'cuDNN', ':updateOutput() (ms):', tmf * 1000))
+print(string.format("%-30s %25s %10.2f", 'cuDNN', ':updateGradInput() (ms):', tmbi * 1000))
 
 if not ok then
-    print(string.format("%-30s %25s %s", 'cuDNN', ':accGradParameters():', 'FAILED!'))
+    print(string.format("%-30s %25s %s", 'cuDNN', ':accGradParameters() (ms):', 'FAILED!'))
 else
-    print(string.format("%-30s %25s %10.2f", 'cuDNN', ':accGradParameters():', tmbg * 1000))
+    print(string.format("%-30s %25s %10.2f", 'cuDNN', ':accGradParameters() (ms):', tmbg * 1000))
 end
-print(string.format("%-30s %25s %10.2f", 'cuDNN', ':Forward:', (tmf) * 1000))
-print(string.format("%-30s %25s %10.2f", 'cuDNN', ':Backward:', (tmbi + tmbg) * 1000))
-print(string.format("%-30s %25s %10.2f", 'cuDNN', ':TOTAL:', (tmf + tmbi + tmbg) * 1000))
+print(string.format("%-30s %25s %10.2f", 'cuDNN', ':Forward (ms):', (tmf) * 1000))
+print(string.format("%-30s %25s %10.2f", 'cuDNN', ':Backward (ms):', (tmbi + tmbg) * 1000))
+print(string.format("%-30s %25s %10.2f", 'cuDNN', ':TOTAL (ms):', (tmf + tmbi + tmbg) * 1000))
 print(string.format("%-30s %25s %10.2f", 'cuDNN', ':Samples processed:', dataset.size))
-print(string.format("%-30s %25s %10.2f", 'cuDNN', ':Samples per ms:', (tRoundTrip * 1000) / dataset.size))
+print(string.format("%-30s %25s %10.2f", 'cuDNN', ':Samples per second:', dataset.size / tRoundTrip))
+print(string.format("%-30s %25s %10.2f", 'cuDNN', ':Seconds of audio processed per second:',  dataset.duration / tRoundTrip))
 
-print(string.format("%-30s %25s %10.2f", 'cuDNN', ':EPOCH TIME:', tRoundTrip * 1000))
+print(string.format("%-30s %25s %10.2f", 'cuDNN', ':EPOCH TIME (s):', tRoundTrip))
 print()
 
 print('')

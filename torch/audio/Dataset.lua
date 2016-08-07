@@ -28,8 +28,13 @@ function Dataset:__init(minibatchSize)
     -- Swapped the freqBins around compared to ref for multiGPU support.
     self.randomness = torch.randn(minibatchSize * (Dataset.uttLengths[#Dataset.uttLengths] + self.extra), Dataset.freqBins)
     local size = 0
-    for index, count in ipairs(Dataset.counts) do size = size + count * Dataset.scaleFactor end -- get total count to track progress
+    local duration = 0
+    for x =1, #Dataset.counts do
+        size = size + Dataset.counts[x] * Dataset.scaleFactor -- get total count to track progress
+        duration = duration + (Dataset.counts[x]  * Dataset.scaleFactor * Dataset.uttLengths[x]) / 100 -- get total duration of dataset (each second is 100 timesteps)
+    end
     self.size = size
+    self.duration = duration
 end
 
 function Dataset:next()
