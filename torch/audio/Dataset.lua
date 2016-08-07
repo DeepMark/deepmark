@@ -25,7 +25,16 @@ function Dataset:__init(minibatchSize)
     for index, value in ipairs(Dataset.counts) do
         table.insert(self.uttCounts, value * Dataset.scaleFactor)
     end
-    self.randomness = torch.randn(Dataset.freqBins, minibatchSize * (Dataset.uttLengths[#Dataset.uttLengths] + self.extra))
+    -- Swapped the freqBins around compared to ref for multiGPU support.
+    self.randomness = torch.randn(minibatchSize * (Dataset.uttLengths[#Dataset.uttLengths] + self.extra), Dataset.freqBins)
+    local size = 0
+    local duration = 0
+    for x =1, #Dataset.counts do
+        size = size + Dataset.counts[x] * Dataset.scaleFactor -- get total count to track progress
+        duration = duration + (Dataset.counts[x]  * Dataset.scaleFactor * Dataset.uttLengths[x]) / 100 -- get total duration of dataset (each second is 100 timesteps)
+    end
+    self.size = size
+    self.duration = duration
 end
 
 function Dataset:next()
@@ -56,7 +65,7 @@ function Dataset:next()
         for x = 1, labelLength do
             label[x] = math.random(Dataset.chars)
         end
-        local input = self.randomness[{ {}, { startIndex, endIndex - 1 } }]
+        local input = self.randomness[{{ startIndex, endIndex - 1 }, {} }]
         return uttLength, input, label
     end
 end
