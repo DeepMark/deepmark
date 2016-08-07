@@ -97,7 +97,10 @@ end
 print(string.format("%-30s %25s %10.2f", 'cuDNN', ':Forward:', (tmf) * 1000))
 print(string.format("%-30s %25s %10.2f", 'cuDNN', ':Backward:', (tmbi + tmbg) * 1000))
 print(string.format("%-30s %25s %10.2f", 'cuDNN', ':TOTAL:', (tmf + tmbi + tmbg) * 1000))
-print(string.format("%-30s %25s %10.2f", 'cuDNN', ':ROUNDTRIP TOTAL:', tRoundTrip * 1000))
+print(string.format("%-30s %25s %10.2f", 'cuDNN', ':Samples processed:', dataset.size))
+print(string.format("%-30s %25s %10.2f", 'cuDNN', ':Samples per ms:', (tRoundTrip * 1000) / dataset.size))
+
+print(string.format("%-30s %25s %10.2f", 'cuDNN', ':EPOCH TIME:', tRoundTrip * 1000))
 print()
 
 print('')
