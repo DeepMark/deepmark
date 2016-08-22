@@ -65,14 +65,14 @@ for t = 1, steps do
         sys.tic()
         grads = criterion:updateGradInput(output, targets)
         model:updateGradInput(inputs, output)
-        tmbi = tmbi + sys.toc()
         cutorch.synchronize()
+        tmbi = tmbi + sys.toc()
 
         collectgarbage()
         sys.tic()
         ok = pcall(function() model:accGradParameters(inputs, output) end)
-        tmbg = tmbg + sys.toc()
         cutorch.synchronize()
+        tmbg = tmbg + sys.toc()
         sizes, input, targets = dataset:nextTorchSet()
         numberOfIterations = numberOfIterations + 1
         xlua.progress(numberOfIterations * batchSize, dataset.size)
