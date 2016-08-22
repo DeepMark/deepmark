@@ -42,9 +42,11 @@ for i = 1, nDryRuns do
     collectgarbage()
 end
 
-local tmf, tmbi, tmbg, tRoundTrip = 0, 0, 0, 0
+local tmfAvg, tmbiAvg, tmbgAvg, tRoundTripAvg = 0,0,0,0
+
 local ok = 1
 for t = 1, steps do
+    local tmf, tmbi, tmbg, tRoundTrip = 0, 0, 0, 0
     local roundTripTimer = torch.Timer()
     dataset = nn.DeepSpeechDataset(batchSize)
     local numberOfIterations = 0
@@ -76,16 +78,16 @@ for t = 1, steps do
         xlua.progress(numberOfIterations * batchSize, dataset.size)
     end
     -- Divide the times to work out average time for updateOutput/updateGrad/accGrad
-    tmf = tmf / numberOfIterations
-    tmbi = tmbi / numberOfIterations
-    tmbg = tmbi / numberOfIterations
+    tmfAvg = tmfAvg + tmf / numberOfIterations
+    tmbiAvg = tmbiAvg + tmbi / numberOfIterations
+    tmbgAvg = tmbgAvg + tmbg / numberOfIterations
     -- Add time taken for round trip of 1 epoch
-    tRoundTrip = tRoundTrip + roundTripTimer:time().real
+    tRoundTripAvg = tRoundTripAvg + roundTripTimer:time().real
 end
-tmf = tmf / steps
-tmbi = tmbi / steps
-tmbg = tmbi / steps
-tRoundTrip = tRoundTrip / steps
+local tmf = tmfAvg / steps
+local tmbi = tmbiAvg / steps
+local tmbg = tmbgAvg / steps
+local tRoundTrip = tRoundTripAvg / steps
 print(string.format("%-30s %25s %10.2f", 'cuDNN', ':updateOutput() (ms):', tmf * 1000))
 print(string.format("%-30s %25s %10.2f", 'cuDNN', ':updateGradInput() (ms):', tmbi * 1000))
 
