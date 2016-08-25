@@ -27,7 +27,7 @@ local function cudnnDeepSpeech2(miniBatchSize, freqBins, nGPUs)
     model:add(cudnn.BatchBRNNReLU(1760, 1760))
     model:add(cudnn.BatchBRNNReLU(1760, 1760))
 
-    model:add(nn.SequenceWise(nn.Linear(1760, 29))) -- keeps the output 3D for multi-GPU.
+    model:add(nn.Bottle(nn.Linear(1760, 29))) -- keeps the output 3D for multi-GPU.
     model = makeModelParallel(model, nGPUs)
     return model, 'cudnnDeepSpeech2', calculateInputSizes
 end
@@ -40,7 +40,6 @@ function makeModelParallel(model, nGPU)
                 local cudnn = require 'cudnn'
                 cudnn.fastest = true
                 require 'BatchBRNNReLU'
-                require 'SequenceWise'
                 require 'rnn'
             end)
             dpt.gradInput = nil
