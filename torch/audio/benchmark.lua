@@ -3,7 +3,6 @@ require 'cunn'
 require 'cudnn'
 require 'nnx'
 require 'BatchBRNNReLU'
-require 'SequenceWise'
 require 'Dataset'
 
 cudnn.fastest = true

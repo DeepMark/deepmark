@@ -25,7 +25,7 @@ function BatchBRNN:__init(inputDim, outputDim)
 
     self:add(self.view_in)
     self:add(nn.Linear(inputDim, outputDim, false))
-    self:add(nn.BatchNormalization(outputDim))
+    self:add(cudnn.BatchNormalization(outputDim))
     self:add(self.view_out)
     self:add(rnn)
     self:add(nn.View(-1, 2, outputDim):setNumInputDims(2))
