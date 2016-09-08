@@ -4,19 +4,28 @@ require 'cudnn'
 require 'nnx'
 require 'BatchBRNNReLU'
 require 'Dataset'
+local pl = require('pl.import_into')()
 
 cudnn.fastest = true
 cudnn.benchmark = false -- set this false due to the varying input shape
 cudnn.verbose = false
-nGPU = 4
+
+local opt = pl.lapp[[
+   --dryrun  (default 10) number of iterations of a dry run not counted towards final timing
+   --nGPU (default 1) number of GPUs to run on
+   --batchSize (default 64) batch size
+   --steps (default 1) number of steps to average performance
+]]
+
+local nGPU = opt.nGPU
 
 deepSpeech = require 'cudnn_deepspeech2'
 
 print('Running on device: ' .. cutorch.getDeviceProperties(cutorch.getDevice()).name)
 
-steps = 1 -- nb of steps in loop to average perf
-nDryRuns = 10
-batchSize = 32
+local steps = opt.steps -- nb of steps in loop to average perf
+local nDryRuns = opt.dryrun
+local batchSize = opt.batchSize
 spectrogramSize = 161
 criterion = nn.CTCCriterion():cuda()
 local dataset = nn.DeepSpeechDataset(batchSize)
