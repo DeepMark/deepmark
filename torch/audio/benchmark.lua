@@ -86,16 +86,15 @@ for t = 1, steps do
     dataset = nn.DeepSpeechDataset(batchSize)
     local numberOfIterations = 0
     local sizes, input, targets = dataset:nextTorchSet()
-    while (sizes ~= nil) do
+    while (sizes ~= nil ) do
         input=input:view(opt.batchSize,1,spectrogramSize, -1)
         inputs:resize(input:size()):copy(input)        
         sys.tic()
         -- Forward through model and then criterion.
         local output = model:updateOutput(inputs)
         loss = criterion:updateOutput(output, targets, calculateInputSizes(sizes))
-
-        tmf = tmf + sys.toc()
         cutorch.synchronize()
+        tmf = tmf + sys.toc()
 
         -- Backwards (updateGradInput, accGradParameters) including the criterion.
         sys.tic()
@@ -121,7 +120,7 @@ local tRoundTrip = tRoundTripAvg / steps
 print(string.format("%-30s %25s %10.2f", 'cuDNN', ':forward (ms):', tmf * 1000))
 print(string.format("%-30s %25s %10.2f", 'cuDNN', ':backward (ms):', tmbi * 1000))
 
-print(string.format("%-30s %25s %10.2f", 'cuDNN', ':TOTAL (ms):', (tmf + tmbi + tmbg) * 1000))
+print(string.format("%-30s %25s %10.2f", 'cuDNN', ':TOTAL (ms):', (tmf + tmbi) * 1000))
 print(string.format("%-30s %25s %10.2f", 'cuDNN', ':Samples processed:', dataset.size))
 print(string.format("%-30s %25s %10.2f", 'cuDNN', ':Samples per second:', dataset.size / tRoundTrip))
 print(string.format("%-30s %25s %10.2f", 'cuDNN', ':Seconds of audio processed per second:',  dataset.duration / tRoundTrip))
