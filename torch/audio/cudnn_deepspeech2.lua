@@ -8,7 +8,6 @@ end
 local function cudnnDeepSpeech2(miniBatchSize, freqBins, nGPUs)
 
     local model = nn.Sequential()
-    model:add(nn.View(miniBatchSize / nGPUs, 1, freqBins, -1))
     model:add(cudnn.SpatialConvolution(1, 32, 20, 5, 2, 2))
     model:add(cudnn.SpatialBatchNormalization(32))
     model:add(cudnn.ClippedReLU(20, true))
