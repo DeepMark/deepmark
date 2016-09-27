@@ -5,10 +5,9 @@ local function calculateInputSizes(sizes)
     return sizes
 end
 
-local function cudnnDeepSpeech2(miniBatchSize, freqBins, nGPUs)
+local function cudnnDeepSpeech2(miniBatchSize, freqBins, nGPUs, useOptnet)
 
     local model = nn.Sequential()
-    model:add(nn.View(miniBatchSize / nGPUs, 1, freqBins, -1))
     model:add(cudnn.SpatialConvolution(1, 32, 20, 5, 2, 2))
     model:add(cudnn.SpatialBatchNormalization(32))
     model:add(cudnn.ClippedReLU(20, true))
@@ -28,6 +27,22 @@ local function cudnnDeepSpeech2(miniBatchSize, freqBins, nGPUs)
     model:add(cudnn.BatchBRNNReLU(1760, 1760))
 
     model:add(nn.Bottle(nn.Linear(1760, 29))) -- keeps the output 3D for multi-GPU.
+    model:cuda()
+    if useOptnet then
+	local optnet = require 'optnet'
+	local seqLength = 100
+	local sampleInput = torch.zeros(2,1,freqBins, seqLength):cuda()
+--[[        local output = model:updateOutput(sampleInput)
+        model:backward(sampleInput, output)
+        cutorch.synchronize()
+	mem1=optnet.countUsedMemory(model) --]]
+        optnet.optimizeMemory(model, sampleInput, {inplace=false, mode = 'training'})
+--[[        model:backward(sampleInput, output)
+	collectgarbage()
+	mem2=optnet.countUsedMemory(model)
+        print('Before optimization        : ', mem1.gradInputs)
+        print('After optimization         : ', mem2.gradInputs)		--]]
+    end
     model = makeModelParallel(model, nGPUs)
     return model, 'cudnnDeepSpeech2', calculateInputSizes
 end
@@ -45,7 +60,7 @@ function makeModelParallel(model, nGPU)
             dpt.gradInput = nil
             model = dpt
         end
-        model:cuda()
+--        model:cuda()
     end
     return model
 end
