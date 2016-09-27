@@ -6,7 +6,6 @@ require 'BatchBRNNReLU'
 require 'Dataset'
 local pl = require('pl.import_into')()
 
-local optnet = require 'optnet'
 
 
 cudnn.fastest = true
@@ -39,7 +38,7 @@ spectrogramSize = 161
 criterion = nn.CTCCriterion():cuda()
 local dataset = nn.DeepSpeechDataset(batchSize)
 collectgarbage()
-local model, model_name, calculateInputSizes = deepSpeech(batchSize, dataset.freqBins, nGPU)
+local model, model_name, calculateInputSizes = deepSpeech(batchSize, dataset.freqBins, nGPU, opt.useOptnet)
   
 local inputs = torch.CudaTensor() -- buffer for inputs
 local sizes, input, targets = dataset:nextTorchSet()
@@ -50,24 +49,6 @@ inputs:resize(input:size()):copy(input)
 
 print('ModelType: ' .. model_name, 'Kernels: ' .. 'cuDNN')
 
-if opt.useOptnet then
-  local seqLength = inputs:size(4)
-  local tmpinp = torch.randn(2,1, spectrogramSize, seqLength)
-  local optinp = torch.CudaTensor()
-  optinp:resize(tmpinp:size()):copy(tmpinp)  
-  local output=model:updateOutput(optinp)
-  model:backward(optinp,output)
-  cutorch.synchronize()
-  mem1=optnet.countUsedMemory(model)
-  optnet.optimizeMemory(model, optinp, {inplace=false, mode = 'training'})
-  model:backward(optinp,output)
-  collectgarbage()
-  mem2 = optnet.countUsedMemory(model)
-  print('Before optimization        : ', mem1)
-  print('After optimization         : ', mem2)
-end
-
--- dry-run
 for i = 1, nDryRuns do
     model:zeroGradParameters()
     local output = model:updateOutput(inputs)
@@ -86,7 +67,7 @@ for t = 1, steps do
     dataset = nn.DeepSpeechDataset(batchSize)
     local numberOfIterations = 0
     local sizes, input, targets = dataset:nextTorchSet()
-    while (sizes ~= nil ) do
+    while (sizes ~= nil) do
         input=input:view(opt.batchSize,1,spectrogramSize, -1)
         inputs:resize(input:size()):copy(input)        
         sys.tic()
@@ -102,10 +83,9 @@ for t = 1, steps do
         model:backward(inputs,output)
         cutorch.synchronize()
         tmbi = tmbi + sys.toc()
-
-        collectgarbage()
+--        collectgarbage()
+        sizes, input, targets = dataset:nextTorchSet()
         numberOfIterations = numberOfIterations + 1
---        printMemory()
         xlua.progress(numberOfIterations * batchSize, dataset.size)
     end
     -- Divide the times to work out average time for updateOutput/updateGrad/accGrad
