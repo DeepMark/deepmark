@@ -86,7 +86,7 @@ for t = 1, steps do
     dataset = nn.DeepSpeechDataset(batchSize)
     local numberOfIterations = 0
     local sizes, input, targets = dataset:nextTorchSet()
-    while (sizes ~= nil and numberOfIterations < 5) do
+    while (sizes ~= nil) do
         input=input:view(opt.batchSize,1,spectrogramSize, -1)
         inputs:resize(input:size()):copy(input)        
         sys.tic()
