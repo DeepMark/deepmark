@@ -1,4 +1,4 @@
-local function c3d(nGPU)
+local function c3d(batchSize)
    -- Create table describing C3D configuration
    local cfg = {64, 'M1', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'}
 
@@ -34,7 +34,7 @@ local function c3d(nGPU)
    local model = nn.Sequential()
    model:add(features):add(classifier)
 
-   return model, {30,3,16,112,112}
+   return model, {batchSize,3,16,112,112}
 end
 
 return c3d

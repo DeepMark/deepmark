@@ -1,6 +1,6 @@
 require 'nn'
 
-local function construct(nGPU)
+local function construct(batchSize)
    local json = require 'cjson'
    local f = io.open('inceptionv3.json')
    local config_str = f:read("*all")
@@ -71,7 +71,7 @@ local function construct(nGPU)
 
    net.gradInput = nil
 
-   return net, {32, 3, 299, 299}
+   return net, {batchSize, 3, 299, 299}
 end
 
 return construct

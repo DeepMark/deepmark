@@ -1,4 +1,4 @@
-local function alexnet(nGPU)
+local function alexnet(batchSize)
    -- from https://code.google.com/p/cuda-convnet2/source/browse/layers/layers-imagenet-1gpu.cfg
    -- this is AlexNet that was presented in the One Weird Trick paper. http://arxiv.org/abs/1404.5997
    local features = nn.Sequential()
@@ -31,7 +31,7 @@ local function alexnet(nGPU)
    local model = nn.Sequential()
    model:add(features):add(classifier)
 
-   return model, {128,3,224,224}
+   return model, {batchSize,3,224,224}
 end
 
 return alexnet

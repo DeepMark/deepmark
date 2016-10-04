@@ -7,7 +7,7 @@ local ReLU = nn.ReLU
 local Max = nn.SpatialMaxPooling
 local SBatchNorm = nn.SpatialBatchNormalization
 
-local function createModel(nGPU)
+local function createModel(batchSize)
    local depth = 50
    local shortcutType = 'B'
    local iChannels
@@ -93,7 +93,7 @@ local function createModel(nGPU)
 
    model:get(1).gradInput = nil
 
-   return model, {64, 3, 224, 224}
+   return model, {batchSize, 3, 224, 224}
 end
 
 return createModel
