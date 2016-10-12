@@ -12,6 +12,7 @@ local opt = pl.lapp[[
    --batchSize (default 128) batch size
    --dryrun  (default 10) number of iterations of a dry run not counted towards final timing
    --iterations (default 10) number of iterations to time and average over
+   --nGPU (default 1) number of GPUs
 ]]
 
 local net, isize = require(opt.network)(opt.batchSize)
@@ -36,9 +37,8 @@ end
 -- optimize memory
 optnet.optimizeMemory(net, input, {inplace=true, mode='training', reuseBuffers=true})
 
-nGPU = cutorch.getDeviceCount()
-if nGPU > 1 then
-   assert(nGPU <= cutorch.getDeviceCount(), 'number of GPUs less than nGPU specified')
+if opt.nGPU > 1 then
+   assert(opt.nGPU <= cutorch.getDeviceCount(), 'number of GPUs less than nGPU specified')
    if opt.network == 'alexnet' or opt.network == 'vgg_d' or opt.network == 'c3d' then
       local features_single = net:get(1)
       local features = nn.DataParallelTable(1, true, true)
@@ -46,7 +46,7 @@ if nGPU > 1 then
    	    require 'cunn'
    	    require 'cudnn'
       end)
-      local gpuid = torch.range(1, nGPU):totable()
+      local gpuid = torch.range(1, opt.nGPU):totable()
       features:add(features_single, gpuid)
       features.gradInput = nil
       net.modules[1] = features
@@ -57,7 +57,7 @@ if nGPU > 1 then
    	    require 'cunn'
    	    require 'cudnn'
       end)
-      local gpuid = torch.range(1, nGPU):totable()
+      local gpuid = torch.range(1, opt.nGPU):totable()
       net:add(net_single, gpuid)
       net.gradInput = nil
    end
@@ -96,11 +96,11 @@ for t = 1, opt.iterations do
    cutorch.synchronize()
 end
 local time_taken_per_iter = tm:time().real / opt.iterations
-local examples_per_sec = 1 / time_taken_per_iter * opt.batchSize * nGPU
+local examples_per_sec = 1 / time_taken_per_iter * opt.batchSize * opt.nGPU
 
 print(string.format("Device: %1d x %-15s    Network: %-15s      Backend: %-10s      " ..
                     "Batchsize/GPU: %-5d      Iter (ms): %-10.2f Examples/sec: %-5d",
-                    nGPU, cutorch.getDeviceProperties(cutorch.getDevice()).name,
+                    opt.nGPU, cutorch.getDeviceProperties(cutorch.getDevice()).name,
                     opt.network,
                     opt.backend,
                     opt.batchSize,
