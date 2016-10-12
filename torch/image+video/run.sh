@@ -24,36 +24,32 @@ DEFAULT_ARGS="--dryrun $DRY_RUN_COUNT --iterations $ITERATIONS_COUNT"
 
 echo "1-GPU benchmarks"
 
-export CUDA_VISIBLE_DEVICES=0
-th benchmark.lua --network alexnet                     $DEFAULT_ARGS
-th benchmark.lua --network resnet      --batchSize 16  $DEFAULT_ARGS
-th benchmark.lua --network vgg_d       --batchSize 32  $DEFAULT_ARGS
-th benchmark.lua --network inceptionv3 --batchSize 32  $DEFAULT_ARGS
-th benchmark.lua --network c3d         --batchSize 30  $DEFAULT_ARGS
+th benchmark.lua --network alexnet                    --nGPU 1 $DEFAULT_ARGS
+th benchmark.lua --network resnet      --batchSize 16 --nGPU 1 $DEFAULT_ARGS
+th benchmark.lua --network vgg_d       --batchSize 32 --nGPU 1 $DEFAULT_ARGS
+th benchmark.lua --network inceptionv3 --batchSize 32 --nGPU 1 $DEFAULT_ARGS
+th benchmark.lua --network c3d         --batchSize 30 --nGPU 1 $DEFAULT_ARGS
 
 echo "2-GPU benchmarks"
 
-export CUDA_VISIBLE_DEVICES=0,1
-th benchmark.lua --network alexnet                     $DEFAULT_ARGS
-th benchmark.lua --network resnet      --batchSize 16  $DEFAULT_ARGS
-th benchmark.lua --network vgg_d       --batchSize 32  $DEFAULT_ARGS
-th benchmark.lua --network inceptionv3 --batchSize 32  $DEFAULT_ARGS
-th benchmark.lua --network c3d         --batchSize 30  $DEFAULT_ARGS
+th benchmark.lua --network alexnet                    --nGPU 2 $DEFAULT_ARGS
+th benchmark.lua --network resnet      --batchSize 16 --nGPU 2 $DEFAULT_ARGS
+th benchmark.lua --network vgg_d       --batchSize 32 --nGPU 2 $DEFAULT_ARGS
+th benchmark.lua --network inceptionv3 --batchSize 32 --nGPU 2 $DEFAULT_ARGS
+th benchmark.lua --network c3d         --batchSize 30 --nGPU 2 $DEFAULT_ARGS
 
 echo "4-GPU benchmarks"
 
-export CUDA_VISIBLE_DEVICES=0,1,2,3
-th benchmark.lua --network alexnet                     $DEFAULT_ARGS
-th benchmark.lua --network resnet      --batchSize 16  $DEFAULT_ARGS
-th benchmark.lua --network vgg_d       --batchSize 32  $DEFAULT_ARGS
-th benchmark.lua --network inceptionv3 --batchSize 32  $DEFAULT_ARGS
-th benchmark.lua --network c3d         --batchSize 30  $DEFAULT_ARGS
+th benchmark.lua --network alexnet                    --nGPU 4 $DEFAULT_ARGS
+th benchmark.lua --network resnet      --batchSize 16 --nGPU 4 $DEFAULT_ARGS
+th benchmark.lua --network vgg_d       --batchSize 32 --nGPU 4 $DEFAULT_ARGS
+th benchmark.lua --network inceptionv3 --batchSize 32 --nGPU 4 $DEFAULT_ARGS
+th benchmark.lua --network c3d         --batchSize 30 --nGPU 4 $DEFAULT_ARGS
 
 echo "8-GPU benchmarks"
 
-export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-th benchmark.lua --network alexnet                     $DEFAULT_ARGS
-th benchmark.lua --network resnet      --batchSize 16  $DEFAULT_ARGS
-th benchmark.lua --network vgg_d       --batchSize 32  $DEFAULT_ARGS
-th benchmark.lua --network inceptionv3 --batchSize 32  $DEFAULT_ARGS
-th benchmark.lua --network c3d         --batchSize 30  $DEFAULT_ARGS
+th benchmark.lua --network alexnet                    --nGPU 8 $DEFAULT_ARGS
+th benchmark.lua --network resnet      --batchSize 16 --nGPU 8 $DEFAULT_ARGS
+th benchmark.lua --network vgg_d       --batchSize 32 --nGPU 8 $DEFAULT_ARGS
+th benchmark.lua --network inceptionv3 --batchSize 32 --nGPU 8 $DEFAULT_ARGS
+th benchmark.lua --network c3d         --batchSize 30 --nGPU 8 $DEFAULT_ARGS
