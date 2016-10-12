@@ -95,9 +95,14 @@ for t = 1, opt.iterations do
    optim.sgd(feval, params, optimState)
    cutorch.synchronize()
 end
-local time_taken = tm:time().real / opt.iterations
+local time_taken_per_iter = tm:time().real / opt.iterations
+local examples_per_sec = 1 / time_taken_per_iter * opt.batchSize * nGPU
 
-print(string.format("Device: %15s    Arch: %15s      Backend: %10s %25s %10.2f",
-                    cutorch.getDeviceProperties(cutorch.getDevice()).name,
-		    opt.network, opt.backend, ':TOTAL (ms) :',
-                    time_taken * 1000))
+print(string.format("Device: %1d x %-15s    Network: %-15s      Backend: %-10s      " ..
+                    "Batchsize/GPU: %-5d      Iter (ms): %-10.2f Examples/sec: %-5d",
+                    nGPU, cutorch.getDeviceProperties(cutorch.getDevice()).name,
+                    opt.network,
+                    opt.backend,
+                    opt.batchSize,
+                    time_taken_per_iter * 1000,
+                    examples_per_sec))
